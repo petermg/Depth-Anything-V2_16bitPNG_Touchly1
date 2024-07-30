@@ -1,3 +1,5 @@
+This fork outputs 16bit png depth map files, which is better suited for use in mesh deformation than the original 8bit.
+
 <div align="center">
 <h1>Depth Anything V2</h1>
 

@@ -5,21 +5,19 @@ import matplotlib
 import numpy as np
 import os
 import torch
-
+from PIL import Image
 from depth_anything_v2.dpt import DepthAnythingV2
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Depth Anything V2')
     
-    parser.add_argument('--img-path', type=str)
+    parser.add_argument('--img-path', type=str, default='inputpics')
     parser.add_argument('--input-size', type=int, default=518)
-    parser.add_argument('--outdir', type=str, default='./vis_depth')
-    
+    parser.add_argument('--outdir', type=str, default='outputpics')
     parser.add_argument('--encoder', type=str, default='vitl', choices=['vits', 'vitb', 'vitl', 'vitg'])
-    
     parser.add_argument('--pred-only', dest='pred_only', action='store_true', help='only display the prediction')
-    parser.add_argument('--grayscale', dest='grayscale', action='store_true', help='do not apply colorful palette')
+    parser.add_argument('--color', dest='color', action='store_true', help='apply colorful palette')
     
     args = parser.parse_args()
     
@@ -53,21 +51,26 @@ if __name__ == '__main__':
         print(f'Progress {k+1}/{len(filenames)}: {filename}')
         
         raw_image = cv2.imread(filename)
+        raw_image16 = (raw_image.astype(np.uint16) * 255)
         
         depth = depth_anything.infer_image(raw_image, args.input_size)
         
-        depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
-        depth = depth.astype(np.uint8)
+        depth = (depth - depth.min()) / (depth.max() - depth.min()) * 65536.0
+        depth = depth.astype(np.uint16)
         
-        if args.grayscale:
-            depth = np.repeat(depth[..., np.newaxis], 3, axis=-1)
+        if args.color:
+            depth = (cmap(depth)[:, :, :3] * 65536)[:, :, ::-1].astype(np.uint16)
         else:
-            depth = (cmap(depth)[:, :, :3] * 255)[:, :, ::-1].astype(np.uint8)
+            depth = np.repeat(depth[..., np.newaxis], 3, axis=-1)
+
+            
+        topimage = raw_image16
+        bottomimage = depth
         
         if args.pred_only:
             cv2.imwrite(os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '.png'), depth)
         else:
-            split_region = np.ones((raw_image.shape[0], 50, 3), dtype=np.uint8) * 255
-            combined_result = cv2.hconcat([raw_image, split_region, depth])
+            #split_region = np.ones((raw_image.shape[0], 50, 3), dtype=np.uint16) * 65536
+            combined_result = cv2.vconcat([topimage, bottomimage])
             
             cv2.imwrite(os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '.png'), combined_result)

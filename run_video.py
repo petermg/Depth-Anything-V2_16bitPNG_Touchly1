@@ -66,6 +66,11 @@ if __name__ == '__main__':
         raw_video = cv2.VideoCapture(filename)
         frame_width, frame_height = int(raw_video.get(cv2.CAP_PROP_FRAME_WIDTH)), int(raw_video.get(cv2.CAP_PROP_FRAME_HEIGHT))
         frame_rate = int(raw_video.get(cv2.CAP_PROP_FPS))
+        if args.useheight:
+            args.input_size=frame_height
+            
+        if args.usewidth:
+            args.input_size=frame_width  
         print('Video Height:', frame_height)
         print('Video Width:', frame_width)
         print('Input Size:', args.input_size) 
@@ -77,11 +82,7 @@ if __name__ == '__main__':
             output_height = frame_height * 2
             output_width = frame_width
             
-        if args.useheight:
-            args.input_size=frame_height
-            
-        if args.usewidth:
-            args.input_size=frame_width    
+  
         
     
 

@@ -81,11 +81,6 @@ if __name__ == '__main__':
         else: 
             output_height = frame_height * 2
             output_width = frame_width
-            
-  
-        
-    
-
 
             
         if args.ffmpeg:

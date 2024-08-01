@@ -7,7 +7,7 @@ import os
 import torch
 from tqdm import tqdm
 import subprocess
-
+import sys
 from depth_anything_v2.dpt import DepthAnythingV2
 
 if __name__ == '__main__':
@@ -34,6 +34,9 @@ if __name__ == '__main__':
     parser.add_argument('--img-path', type=str, default='inputpics', help='default is "inputpics"')
     parser.add_argument('--imgoutdir', type=str, default='outputpics', help='default is "outputpics"')
     parser.add_argument('--imagetovideo', action='store_true', help='Creates 30 second clips in the Touchly1 format from input images. MUST be used in conjunction with --images option.')
+    parser.add_argument('--extension', type=str, default='mkv', help='Sets the file extension/container. Default is "mkv". Note, different containers support different codecs.')
+    parser.add_argument('--showcodecs', action='store_true', help='Shows available video codecs for the cv2.VideoWriter_fourcc encoder to use. Best used in conjunction with "--extension" to specify a format like mp4, avi, mkv, etc. to see supported codecs for respective file formats.')
+    parser.add_argument('--ffmpeg-version', action='store_true', help='Shows what version of ffmpeg is being used.')
 
     
     args = parser.parse_args()
@@ -50,7 +53,7 @@ if __name__ == '__main__':
     depth_anything = DepthAnythingV2(**model_configs[args.encoder])
     depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))
     depth_anything = depth_anything.to(DEVICE).eval()
-    if not args.images:
+    if not args.images and not args.showcodecs and not args.ffmpeg_version:
         if os.path.isfile(args.video_path):
             if args.video_path.endswith('txt'):
                 with open(args.video_path, 'r') as f:
@@ -163,8 +166,8 @@ if __name__ == '__main__':
                 os.rmdir(frames_dir)
 
             elif not args.ffmpeg and not args.images:         
-                temp_output_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_temp.mkv')
-                final_output_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_Touchly1' + '.' + 'mkv')
+                temp_output_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_temp.'+ args.extension)
+                final_output_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_Touchly1' + '.' + args.extension)
                 out = cv2.VideoWriter(temp_output_path, cv2.VideoWriter_fourcc(*args.codec), frame_rate, (output_width, output_height))
                 totalFrameCount = int(raw_video.get(cv2.CAP_PROP_FRAME_COUNT))
                 
@@ -202,13 +205,34 @@ if __name__ == '__main__':
                 # Remove the temporary video file
                 os.remove(temp_output_path)
                 
+    if args.showcodecs:
+        print()
+        print('*****These are the video codecs for the cv2.VideoWriter.*****')
+        print()
+        print(cv2.VideoWriter(args.outdir + '/dummy.' + args.extension, -1, 30, (1920, 1080)))
+        print()
+        print('*****These are the video and audio codecs supported by ffmpeg. You must use the --ffmpeg option with --ffmpeg-codec to use them.*****')
+        print()
+        ffmpegvideocodes = [
+                    'ffmpeg','-encoders', '-hide_banner',
+                ]
+        subprocess.run(ffmpegvideocodes)
+        sys.exit()  
+        
+    if args.ffmpeg_version:
+        print('You are using the following ffmpeg version:')
+        ffmpegvideocodes = [
+                    'ffmpeg','-version',
+                ]
+        subprocess.run(ffmpegvideocodes)
+        sys.exit()          
+    
+                
     if args.images:  
         depth_anything = DepthAnythingV2(**model_configs[args.encoder])
         depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))
         depth_anything = depth_anything.to(DEVICE).eval()
-        
-
-        
+         
         
         if os.path.isfile(args.img_path):
             if args.img_path.endswith('txt'):

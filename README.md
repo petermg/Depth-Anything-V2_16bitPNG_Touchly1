@@ -1,4 +1,5 @@
 This fork outputs 16bit png depth map files, which is better suited for use in mesh deformation than the original 8bit.
+This has been updated to fully support the Touchly1 format. Originally I had done this with a different fork until I found out that it had lower quality for speed improvements. This fork is focused on quality above speed. However you can always lower the input size "--input-size" to speed things up.
 
 <div align="center">
 <h1>Depth Anything V2</h1>

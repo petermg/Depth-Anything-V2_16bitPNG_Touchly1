@@ -18,7 +18,7 @@ The main Touchly website is here: https://touchly.app/
 
 You can also download the official Touchly renderer / encoder app here: https://touchly.app/renderer/ There is a free version and a Pro version ($10). The Touchly Renderer both free and paid version can create volumetric videos from 2D videos and also from 3D SBS videos and 3D VR180 videos.
 
-Only [run.py (image processing)](#running-script-on-images) has been modified to output 16 bit precision images.
+To process images run "python run_video.py --images" as image processing has been added to the "run_video.py" script. I should rename this script...
 
 <div align="center">
 <h1>Depth Anything V2</h1>

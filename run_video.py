@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
                
             if args.ffmpeg:
-                output_basename = os.path.splitext(os.path.basename(filename))[0] + '_Touchly1'
+                output_basename = os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + '_Touchly1'
                 output_path = os.path.join(args.outdir, output_basename + '.' + args.ffmpeg_extension)
                 frames_dir = os.path.join(args.outdir, output_basename + '_frames')
                 os.makedirs(frames_dir, exist_ok=True)
@@ -167,7 +167,7 @@ if __name__ == '__main__':
 
             elif not args.ffmpeg and not args.images:         
                 temp_output_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_temp.'+ args.extension)
-                final_output_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_Touchly1' + '.' + args.extension)
+                final_output_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + '_Touchly1' + '.' + args.extension)
                 out = cv2.VideoWriter(temp_output_path, cv2.VideoWriter_fourcc(*args.codec), frame_rate, (output_width, output_height))
                 totalFrameCount = int(raw_video.get(cv2.CAP_PROP_FRAME_COUNT))
                 
@@ -276,7 +276,7 @@ if __name__ == '__main__':
             bottomimage = depth
             
 
-            output_img_path = os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + '.png')
+            output_img_path = os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + '.png')
             #output_img_path = os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0])
             
             if args.pred_only:
@@ -288,7 +288,7 @@ if __name__ == '__main__':
                 cv2.imwrite(output_img_path, combined_result)
             if args.imagetovideo:
                 # Create a 30-second video from the saved PNG file
-                output_video_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_pic_Touchly1.' + args.ffmpeg_extension)
+                output_video_path = os.path.join(args.outdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + '_pic_Touchly1.' + args.ffmpeg_extension)
                 cmd = [
                     'ffmpeg',
                     '-loop', '1',

@@ -37,6 +37,8 @@ if __name__ == '__main__':
     parser.add_argument('--extension', type=str, default='mkv', help='Sets the file extension/container. Default is "mkv". Note, different containers support different codecs.')
     parser.add_argument('--showcodecs', action='store_true', help='Shows available video codecs for the cv2.VideoWriter_fourcc encoder to use. Best used in conjunction with "--extension" to specify a format like mp4, avi, mkv, etc. to see supported codecs for respective file formats.')
     parser.add_argument('--ffmpeg-version', action='store_true', help='Shows what version of ffmpeg is being used.')
+    parser.add_argument('--fps', type=int, help='Manually sets the framerate output for the video. Can be useful in some cases where the input framerate is not correctly detected by opencv.')
+    parser.add_argument('--opencv', action='store_true', help='Use OpenCV to get the FPS instead of FFMPEG. OpenCV is often WRONG!')
 
     
     args = parser.parse_args()
@@ -50,9 +52,12 @@ if __name__ == '__main__':
         'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
     }
     
+    print(DEVICE)
+    
     depth_anything = DepthAnythingV2(**model_configs[args.encoder])
     depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))
     depth_anything = depth_anything.to(DEVICE).eval()
+    
     if not args.images and not args.showcodecs and not args.ffmpeg_version:
         if os.path.isfile(args.video_path):
             if args.video_path.endswith('txt'):
@@ -67,20 +72,39 @@ if __name__ == '__main__':
         
         margin_width = 0
         cmap = matplotlib.colormaps.get_cmap('Spectral_r')
+
+        def get_video_fps(video_path):
+            result = subprocess.run(
+                ['ffmpeg', '-i', video_path],
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                text=True
+            )
+            for line in result.stderr.split('\n'):
+                if 'Stream #0' in line and 'tbr' in line:
+                    fps = float(line.split('tbr')[0].split()[-1])
+                    return fps
         
         for k, filename in enumerate(filenames):
             print(f'Progress {k+1}/{len(filenames)}: {filename}')
             raw_video = cv2.VideoCapture(filename)
             frame_width, frame_height = int(raw_video.get(cv2.CAP_PROP_FRAME_WIDTH)), int(raw_video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            frame_rate = int(raw_video.get(cv2.CAP_PROP_FPS))
+            if args.opencv:
+                frame_rate = int(raw_video.get(cv2.CAP_PROP_FPS))
+            if not args.opencv:
+                frame_rate = get_video_fps(filename)
             if args.useheight:
                 args.input_size=frame_height
+                
+            if args.fps:
+                frame_rate=args.fps
                 
             if args.usewidth:
                 args.input_size=frame_width  
             print('Video Height:', frame_height)
             print('Video Width:', frame_width)
             print('Input Size:', args.input_size) 
+            print('Frame Rate is:',frame_rate)
             
             if args.pred_only: 
                 output_width = frame_width
@@ -265,7 +289,7 @@ if __name__ == '__main__':
             depth = depth.astype(np.uint16)
             print('Image Height is ', raw_image16.shape[0])
             print('Image Width is ',raw_image16.shape[1])
-            print('Input size is ',args.input_size)            
+            print('Input size is ',args.input_size)                 
             if args.color:
                 depth = (cmap(depth)[:, :, :3] * 65536)[:, :, ::-1].astype(np.uint16)
             else:

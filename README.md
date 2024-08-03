@@ -6,6 +6,8 @@ This has been updated to fully support the Touchly1 format. Originally I had don
 
 ### This fork also outputs video files in the "Touchly1" format, which has the depth map on the bottom and the original video on the top, vertically stacking the output. Just append "_Touchly1" to the name of the video file to play it back in the Touchly player in 6DoF 3D!
 
+Please use the "--help" flag with "run_video.py" to see all the options, many of which I have not yet taken the time to document here yet.
+
 You can process video files by running ["run_video.py"](#running-script-on-videos)
 
 You can download the Touchly Volumetric media player for the standalone Quest (Free) here: https://www.meta.com/experiences/5564815066942737/

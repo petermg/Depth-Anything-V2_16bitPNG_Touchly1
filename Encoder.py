@@ -25,20 +25,20 @@ if __name__ == '__main__':
     parser.add_argument('--color', dest='color', action='store_true', help='do not apply colorful palette')
     parser.add_argument('--ffmpeg-codec', type=str, default='copy', help='Sets the ffmpeg video codec for the ffmpeg output. To be used in conjunction with the --ffmpeg option.')
     parser.add_argument('--ffmpeg-extension', type=str, default='mkv', help='Sets the file extension/container for the final output by ffmpeg. Default is "mkv". Note, different containers support different codecs.')
-    parser.add_argument('--bit16', dest='bit16', action='store_true', help='Used with --ffmpeg, creates 16bit grayscale png files as intermediates before encoding video file. Does not work with --color option.')
-    parser.add_argument('--pix-fmt', type=str, default='yuv420p', help='Sets the video input pixel format. Default is "yuv420p". To be used with the --ffmpeg option.')
+    parser.add_argument('--bit16', dest='bit16', action='store_true', help='Used with --ffmpeg, creates 16bit grayscale png files as intermediates before encoding video file. Does not work with --color option. Not needed when using "--imagetovideo".')
     parser.add_argument('--useheight', dest='useheight', action='store_true', help='Sets the input height to match the height of the input video.')
     parser.add_argument('--usewidth', dest='usewidth', action='store_true', help='Sets the input height to match the width of the input video.')
     parser.add_argument('--codec', type=str, default='HFYU', help='Sets the ffmpeg video codec for the ffmpeg output. To be used in conjunction with the --ffmpeg option.')
     parser.add_argument('--images', action='store_true', help='Create depthmaps from image files stored in the images input folder')
     parser.add_argument('--img-path', type=str, default='inputpics', help='default is "inputpics"')
     parser.add_argument('--imgoutdir', type=str, default='outputpics', help='default is "outputpics"')
-    parser.add_argument('--imagetovideo', action='store_true', help='Creates 30 second clips in the Touchly1 format from input images. MUST be used in conjunction with --images option.')
+    parser.add_argument('--imagetovideo', action='store_true', help='Creates 30 second clips in the Touchly1 format from input images. MUST be used in conjunction with --images option. Outputs in 16bit before converting to video.')
     parser.add_argument('--extension', type=str, default='mkv', help='Sets the file extension/container. Default is "mkv". Note, different containers support different codecs.')
     parser.add_argument('--showcodecs', action='store_true', help='Shows available video codecs for the cv2.VideoWriter_fourcc encoder to use. Best used in conjunction with "--extension" to specify a format like mp4, avi, mkv, etc. to see supported codecs for respective file formats.')
     parser.add_argument('--ffmpeg-version', action='store_true', help='Shows what version of ffmpeg is being used.')
     parser.add_argument('--fps', type=int, help='Manually sets the framerate output for the video. Can be useful in some cases where the input framerate is not correctly detected by opencv.')
     parser.add_argument('--opencv', action='store_true', help='Use OpenCV to get the FPS instead of FFMPEG. OpenCV is often WRONG!')
+    parser.add_argument('--extras', type=str, help='Here is where you can encapsulate ANY and ALL additional ffmpeg flags you would like to pass for encoding. HOWEVER this MUST be in quotations, for example ''--extras' "-c:v nvenc_h264 -b:v 30M"'. Something like that.')
 
     
     args = parser.parse_args()
@@ -169,17 +169,22 @@ if __name__ == '__main__':
                 raw_video.release()
                 
                 # Encode video using ffmpeg
+                additional_ffmpeg_args = ""
+                if args.extras:
+                    additional_ffmpeg_args = args.extras
+                additional_ffmpeg_args_list = additional_ffmpeg_args.split()
                 ffmpeg_cmd = [
                     'ffmpeg', '-framerate', str(frame_rate), '-i',
                     os.path.join(frames_dir, 'frame_%06d.' + temppics),
-                    '-c:v', args.ffmpeg_codec, '-pix_fmt', args.pix_fmt, '-b:v', args.video_bitrate, output_path
+                    *additional_ffmpeg_args_list, output_path
                 ]
                 subprocess.run(ffmpeg_cmd)
+                print(ffmpeg_cmd)
                 
                 # Mux audio into the video using ffmpeg
                 temp_output_path = os.path.join(args.outdir, output_basename + '_temp.' + args.ffmpeg_extension)
                 mux_command = [
-                     'ffmpeg', '-i', output_path, '-i', filename, '-c:v', 'copy', '-c:a', args.audio_codec, '-b:a:', args.audio_bitrate, '-map', '0:v:0', '-map', '1:a:0', temp_output_path
+                     'ffmpeg', '-i',output_path, '-i', filename, '-c:v', 'copy', '-c:a', args.audio_codec, '-b:a', args.audio_bitrate, '-map', '0:v:0', '-map', '1:a:0', temp_output_path
                 ]
                 subprocess.run(mux_command)
                 os.replace(temp_output_path, output_path)
@@ -256,7 +261,10 @@ if __name__ == '__main__':
         depth_anything = DepthAnythingV2(**model_configs[args.encoder])
         depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))
         depth_anything = depth_anything.to(DEVICE).eval()
-         
+        additional_ffmpeg_args = ""
+        if args.extras:
+            additional_ffmpeg_args = args.extras
+        additional_ffmpeg_args_list = additional_ffmpeg_args.split() 
         
         if os.path.isfile(args.img_path):
             if args.img_path.endswith('txt'):
@@ -318,11 +326,8 @@ if __name__ == '__main__':
                     '-loop', '1',
                     '-framerate', '1',
                     '-i', output_img_path,
-                    '-c:v', args.ffmpeg_codec,
+                    *additional_ffmpeg_args_list,
                     '-t', '30',
-                    '-pix_fmt', args.pix_fmt,
-                    '-b:v', args.video_bitrate,
-                   # '-vf', f'scale={raw_image.shape[1]}:{raw_image.shape[0]}',
                     '-y', output_video_path
                 ]
                 subprocess.run(cmd)

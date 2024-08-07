@@ -39,12 +39,14 @@ if __name__ == '__main__':
     parser.add_argument('--fps', type=int, help='Manually sets the framerate output for the video. Can be useful in some cases where the input framerate is not correctly detected by opencv.')
     parser.add_argument('--opencv', action='store_true', help='Use OpenCV to get the FPS instead of FFMPEG. OpenCV is often WRONG!')
     parser.add_argument('--extras', type=str, help='Here is where you can encapsulate ANY and ALL additional ffmpeg flags you would like to pass for encoding. HOWEVER this MUST be in quotations, for example ''--extras' "-c:v nvenc_h264 -b:v 30M"'. Something like that.')
+    parser.add_argument('--device', type=str, choices=['cuda', 'mps', 'cpu'], help='Manually specify your device. Mainly intended to test running on the CPU for devices with CUDA enabled to bypass CUDA for testing purposes.')
 
     
     args = parser.parse_args()
     
     DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
-    
+    if args.device:
+        DEVICE = args.device
     model_configs = {
         'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]},
         'vitb': {'encoder': 'vitb', 'features': 128, 'out_channels': [96, 192, 384, 768]},
@@ -52,7 +54,7 @@ if __name__ == '__main__':
         'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
     }
     
-    print(DEVICE)
+    print('Device:', DEVICE)
     
     depth_anything = DepthAnythingV2(**model_configs[args.encoder])
     depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))

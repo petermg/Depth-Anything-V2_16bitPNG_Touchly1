@@ -1,14 +1,18 @@
 import argparse
+import os
+os.environ["OPENCV_IO_ENABLE_OPENEXR"]="1"
 import cv2
 import glob
 import matplotlib
 import numpy as np
-import os
 import torch
 from tqdm import tqdm
 import subprocess
 import sys
+import imageio as im
 from depth_anything_v2.dpt import DepthAnythingV2
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Depth Anything V2')
@@ -40,7 +44,8 @@ if __name__ == '__main__':
     parser.add_argument('--opencv', action='store_true', help='Use OpenCV to get the FPS instead of FFMPEG. OpenCV is often WRONG!')
     parser.add_argument('--extras', type=str, help='Here is where you can encapsulate ANY and ALL additional ffmpeg flags you would like to pass for encoding. HOWEVER this MUST be in quotations, for example ''--extras' "-c:v nvenc_h264 -b:v 30M"'. Something like that.')
     parser.add_argument('--device', type=str, choices=['cuda', 'mps', 'cpu'], help='Manually specify your device. Mainly intended to test running on the CPU for devices with CUDA enabled to bypass CUDA for testing purposes.')
-
+    parser.add_argument('--exr', action='store_true', help='The predicted result is in floating point format, so you can save that directly as an OpenEXR image.')
+    parser.add_argument('--exronly', action='store_true', help='The predicted result is in floating point format, so you can save that directly as an OpenEXR image ONLY.')
     
     args = parser.parse_args()
     
@@ -133,6 +138,9 @@ if __name__ == '__main__':
                         temppics = 'png'
                         raw_frame16 = (raw_frame.astype(np.uint16) * 255)
                         depth = depth_anything.infer_image(raw_frame, args.input_size)
+                        #if args.exr:
+                            #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '.exr'), depth)
+                            #cv2.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + 'cv2' + '.exr'), depth)
                         depth = (depth - depth.min()) / (depth.max() - depth.min()) * 65536.0
                         #depth = depth.cpu().numpy().astype(np.uint16)
                         depth = depth.astype(np.uint16)
@@ -142,6 +150,9 @@ if __name__ == '__main__':
                         temppics = 'jpg'
                         raw_frame16 = raw_frame
                         depth = depth_anything.infer_image(raw_frame, args.input_size)
+                        #if args.exr:
+                            #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '.exr'), depth)
+                            #cv2.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + 'cv2' + '.exr'), depth)
                         depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255
                         #depth = depth.cpu().numpy().astype(np.uint16)
                         depth = depth.astype(np.uint8)
@@ -150,6 +161,9 @@ if __name__ == '__main__':
                     if args.color:
                         raw_frame16 = (raw_frame.astype(np.uint16) * 255)
                         depth = depth_anything.infer_image(raw_frame, args.input_size)
+                        #if args.exr:
+                            #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '.exr'), depth)
+                            #cv2.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + 'cv2' + '.exr'), depth)
                         depth = (depth - depth.min()) / (depth.max() - depth.min()) * 65536.0
                         #depth = depth.cpu().numpy().astype(np.uint8)
                         depth = depth.astype(np.uint16)
@@ -208,6 +222,9 @@ if __name__ == '__main__':
                         break
                 
                     depth = depth_anything.infer_image(raw_frame, args.input_size)
+                   # if args.exr:
+                        #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '.exr'), depth)
+                        #cv2.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + 'cv2' + '.exr'), depth)
                     depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
                     depth = depth.astype(np.uint8)
                     
@@ -260,9 +277,9 @@ if __name__ == '__main__':
     
                 
     if args.images:  
-        depth_anything = DepthAnythingV2(**model_configs[args.encoder])
-        depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))
-        depth_anything = depth_anything.to(DEVICE).eval()
+        #depth_anything = DepthAnythingV2(**model_configs[args.encoder])
+        #depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))
+        #depth_anything = depth_anything.to(DEVICE).eval()
         additional_ffmpeg_args = ""
         if args.extras:
             additional_ffmpeg_args = args.extras
@@ -293,6 +310,11 @@ if __name__ == '__main__':
                 args.input_size=(raw_image16.shape[1]) 
             newInputSize = round(args.input_size / 14) * 14
             depth = depth_anything.infer_image(raw_image, args.input_size)
+            if args.exr or args.exronly:
+            #    im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '.exr'), depth)
+                cv2.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + 'cv2' + '.exr'), depth)
+            if args.exronly:
+                sys.exit()
             depth = (depth - depth.min()) / (depth.max() - depth.min()) * 65536.0
             #depth = depth.cpu().numpy().astype(np.uint16)
             #depth = depth.numpy().astype(np.uint16)

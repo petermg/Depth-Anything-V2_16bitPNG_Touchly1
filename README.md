@@ -6,9 +6,9 @@ This has been updated to fully support the Touchly1 format. Originally I had don
 
 ### This fork also outputs video files in the "Touchly1" format, which has the depth map on the bottom and the original video on the top, vertically stacking the output. Just append "_Touchly1" to the name of the video file to play it back in the Touchly player in 6DoF 3D!
 
-Please use the "--help" flag with "run_video.py" to see all the options, many of which I have not yet taken the time to document here yet.
+Please use the "--help" flag with "Encoder.py" to see all the options, many of which I have not yet taken the time to document here yet.
 
-You can process video files by running ["run_video.py"](#running-script-on-videos)
+You can process video files by running ["Encoder.py"](#running-script-on-videos)
 
 You can download the Touchly Volumetric media player for the standalone Quest (Free) here: https://www.meta.com/experiences/5564815066942737/
 
@@ -18,7 +18,7 @@ The main Touchly website is here: https://touchly.app/
 
 You can also download the official Touchly renderer / encoder app here: https://touchly.app/renderer/ There is a free version and a Pro version ($10). The Touchly Renderer both free and paid version can create volumetric videos from 2D videos and also from 3D SBS videos and 3D VR180 videos.
 
-To process images run "python run_video.py --images" as image processing has been added to the "run_video.py" script. I should rename this script...
+To process images run "python Encoder.py --images" as image processing has been added to the "Encoder.py" script. I should rename this script...
 
 <div align="center">
 <h1>Depth Anything V2</h1>
@@ -136,7 +136,7 @@ python run.py --encoder vitl --img-path assets/examples --outdir depth_vis
 ### Running script on *videos*
 
 ```bash
-python run_video.py \
+python Encoder.py \
   --encoder <vits | vitb | vitl | vitg> \
   [--video-path <path to input video file(s)> (default is inputvideo)]  [--outdir <path to output video files> (default is outputvideo)]
   [--custom-height --height <size> (default is 518)] [--pred-only (optional as this only produces a depthmap video NOT a Touchly1 formatted video.)] [--color (DO NOT USE THIS OPTION if you want to create a Touchly1 formatted video)] [--codec <fourcc codec> (default is HFYU)] [--extension <video file container extension> (default is mkv)]
@@ -144,22 +144,22 @@ python run_video.py \
 By default the encoder uses vitl. By default using "--custom-height" sets the new height to 518. If you add "--height" you can specify whatever height you want your input video to be resized to. The width will automatically be resized to maintain the same aspect ratio. This is generally used for the purpose of LOWERING the input size of the video in cases of OUT OF MEMORY errors when processing.
 Some command line examples for processing videos to the Touchly1 format:
 ```bash
-python run_video.py --custom-height --height 256
+python Encoder.py --custom-height --height 256
 ```
 The above command creates a video with the original video on top, the depthmap video on the bottom and a reduced input height set to 256. Since no directories are specified it looks for the input files in the default location of 'assets/inputvideo' and saves the output to the default location of 'outputvideo'.
 Another example:
 ```bash
-python run_video.py
+python Encoder.py
 ```
 The above example processes the input video(s) from the default folder of 'inputvideo', does not resize the video for processing but uses the same resolution to create the depthmap and saves the video output to the default folder of 'outputvideo'. This creates a vertically stacked output of the original videon on top and the depthmap on the bottom, which is the Touchly1 volumetric video format.
 ```bash
-python run_video.py --custom-height --height 256 --extension avi --codec mjpg
+python Encoder.py --custom-height --height 256 --extension avi --codec mjpg
 ```
 The above command first resizes the input video to 256 heigh with a width maintaining the original aspect ratio, it saves it as an AVI file, and encodes it using the MJPG codec.
 
 You can also determine what codecs are supported for what containers / extensions by using the following command:
 ```bash
-python run_video.py --showcodecs --extension avi
+python Encoder.py --showcodecs --extension avi
 ```
 The above command will show you which codecs are available to be used with the avi format/extension/container. By default it will show you the codecs avialable for the mkv format/extension/container if a format/extension/container is not specified by use of the "--extension" option.
 
@@ -359,7 +359,7 @@ python run.py --encoder vitl --img-path assets/examples --outdir depth_vis
 ### Running script on *videos*
 
 ```bash
-python run_video.py \
+python Encoder.py \
   --encoder <vits | vitb | vitl | vitg> \
   --video-path assets/examples_video --outdir video_depth_vis \
   [--input-size <size>] [--pred-only] [--grayscale]

@@ -88,8 +88,8 @@ if __name__ == '__main__':
                 text=True
             )
             for line in result.stderr.split('\n'):
-                if 'Stream #0' in line and 'tbr' in line:
-                    fps = float(line.split('tbr')[0].split()[-1])
+                if 'Stream #0' in line and 'fps' in line:
+                    fps = float(line.split('fps')[0].split()[-1])
                     return fps
         
         for k, filename in enumerate(filenames):
@@ -311,7 +311,11 @@ if __name__ == '__main__':
             newInputSize = round(args.input_size / 14) * 14
             depth = depth_anything.infer_image(raw_image, args.input_size)
             if args.exr or args.exronly:
-            #    im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '.exr'), depth)
+                #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '.exr'), depth)
+                #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '_DEFAULT.exr'), depth, flags=im.plugins.freeimage.IO_FLAGS.EXR_DEFAULT)
+                #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '_PIZ.exr'), depth, flags=im.plugins.freeimage.IO_FLAGS.EXR_PIZ)
+                #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '_FLOAT.exr'), depth, flags=im.plugins.freeimage.IO_FLAGS.EXR_FLOAT)
+                #im.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + str(args.input_size) + '_NONE.exr'), depth, flags=im.plugins.freeimage.IO_FLAGS.EXR_NONE)
                 cv2.imwrite(os.path.join(args.imgoutdir, os.path.splitext(os.path.basename(filename))[0] + '_IS_' + str(args.input_size) + 'cv2' + '.exr'), depth)
             if args.exronly:
                 sys.exit()

@@ -41,11 +41,12 @@ if __name__ == '__main__':
     parser.add_argument('--showcodecs', action='store_true', help='Shows available video codecs for the cv2.VideoWriter_fourcc encoder to use. Best used in conjunction with "--extension" to specify a format like mp4, avi, mkv, etc. to see supported codecs for respective file formats.')
     parser.add_argument('--ffmpeg-version', action='store_true', help='Shows what version of ffmpeg is being used.')
     parser.add_argument('--fps', type=int, help='Manually sets the framerate output for the video. Can be useful in some cases where the input framerate is not correctly detected by opencv.')
-    parser.add_argument('--opencv', action='store_true', help='Use OpenCV to get the FPS instead of FFMPEG. OpenCV is often WRONG!')
+    #parser.add_argument('--opencv', action='store_true', help='Use OpenCV to get the FPS instead of FFMPEG. OpenCV is often WRONG!')
     parser.add_argument('--extras', type=str, help='Here is where you can encapsulate ANY and ALL additional ffmpeg flags you would like to pass for encoding. HOWEVER this MUST be in quotations, for example ''--extras' "-c:v nvenc_h264 -b:v 30M"'. Something like that.')
     parser.add_argument('--device', type=str, choices=['cuda', 'mps', 'cpu'], help='Manually specify your device. Mainly intended to test running on the CPU for devices with CUDA enabled to bypass CUDA for testing purposes.')
     parser.add_argument('--exr', action='store_true', help='The predicted result is in floating point format, so you can save that directly as an OpenEXR image.')
     parser.add_argument('--exronly', action='store_true', help='The predicted result is in floating point format, so you can save that directly as an OpenEXR image ONLY.')
+    parser.add_argument('--fpsdetect', type=str, default='fps', choices=['fps', 'tbr', 'opencv'], help='Default is "fps" but can also pick "tbr" return value from ffmpeg to determine the framerate. Set "opencv" to use OPENCV, which is OFTEN WRONG!')
     
     args = parser.parse_args()
     
@@ -88,17 +89,17 @@ if __name__ == '__main__':
                 text=True
             )
             for line in result.stderr.split('\n'):
-                if 'Stream #0' in line and 'fps' in line:
-                    fps = float(line.split('fps')[0].split()[-1])
+                if 'Stream #0' in line and args.fpsdetect in line:
+                    fps = float(line.split(args.fpsdetect)[0].split()[-1])
                     return fps
         
         for k, filename in enumerate(filenames):
             print(f'Progress {k+1}/{len(filenames)}: {filename}')
             raw_video = cv2.VideoCapture(filename)
             frame_width, frame_height = int(raw_video.get(cv2.CAP_PROP_FRAME_WIDTH)), int(raw_video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            if args.opencv:
+            if args.fpsdetect=='opencv':
                 frame_rate = int(raw_video.get(cv2.CAP_PROP_FPS))
-            if not args.opencv:
+            if not args.fpsdetect=='opencv':
                 frame_rate = get_video_fps(filename)
             if args.useheight:
                 args.input_size=frame_height

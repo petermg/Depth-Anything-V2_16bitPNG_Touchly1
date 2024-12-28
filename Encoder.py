@@ -9,7 +9,7 @@ import torch
 from tqdm import tqdm
 import subprocess
 import sys
-import imageio as im
+#import imageio as im
 from depth_anything_v2.dpt import DepthAnythingV2
 
 

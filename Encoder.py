@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--encoder', type=str, default='vitl', choices=['vits', 'vitb', 'vitl', 'vitg'])
     parser.add_argument('--audio-codec', type=str, default='copy', help='Specify the audio codec to be used when ffmpeg adds the audio. By default this is set to "copy" which just remuxes the audio from the original video file without any re-encoding. The --ffmpeg option is NOT required for this.')
     parser.add_argument('--pred-only', dest='pred_only', action='store_true', help='only display the prediction')
-    parser.add_argument('--color', dest='color', action='store_true', help='do not apply colorful palette')
+    parser.add_argument('--color', dest='color', action='store_true', help='Apply colorful palette instead of grayscale')
     parser.add_argument('--ffmpeg-codec', type=str, default='copy', help='Sets the ffmpeg video codec for the ffmpeg output. To be used in conjunction with the --ffmpeg option.')
     parser.add_argument('--ffmpeg-extension', type=str, default='mkv', help='Sets the file extension/container for the final output by ffmpeg. Default is "mkv". Note, different containers support different codecs.')
     parser.add_argument('--bit16', dest='bit16', action='store_true', help='Used with --ffmpeg, creates 16bit grayscale png files as intermediates before encoding video file. Does not work with --color option. Not needed when using "--imagetovideo".')
